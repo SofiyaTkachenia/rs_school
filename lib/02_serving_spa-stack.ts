@@ -2,6 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs'; // Импортируем Construct из constructs
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 
@@ -21,29 +23,42 @@ class ServingSpaStack extends cdk.Stack {
       websiteIndexDocument: 'index.html',
       objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
       blockPublicAccess: new s3.BlockPublicAccess({
-        blockPublicAcls: false,
-        blockPublicPolicy: false,
-        ignorePublicAcls: false,
-        restrictPublicBuckets: false,
+        blockPublicAcls: true,
+        blockPublicPolicy: true,
+        ignorePublicAcls: true,
+        restrictPublicBuckets: true,
       }),
     });
     
-    const policyStatement = new iam.PolicyStatement({
+    const cloudFrontOAI = new cloudfront.OriginAccessIdentity(this, 'OAI');
+
+    bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      principals: [new iam.AnyPrincipal()],
+      principals: [new iam.CanonicalUserPrincipal(cloudFrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
       actions: ['s3:GetObject'],
       resources: [`${bucket.bucketArn}/*`],
+    }));
+
+    const distribution = new cloudfront.Distribution(this, 'CloudFrontDistribution', {
+      defaultBehavior: {
+        origin: new origins.S3Origin(bucket, {
+          originAccessIdentity: cloudFrontOAI,
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+      },
+      defaultRootObject: 'index.html',
     });
 
-    bucket.addToResourcePolicy(policyStatement);
-
-    const bucketDeployment = new s3deploy.BucketDeployment(this, 'DeployWebsite', {
+    new s3deploy.BucketDeployment(this, 'DeployWebsite', {
       sources: [s3deploy.Source.asset('/Users/sofiatkachenia/Documents/learning/rs_course/nodejs-aws-shop-react/dist')],
       destinationBucket: bucket,
-      contentType: 'text/html', 
+      distribution: distribution,
+      distributionPaths: ['/*'],
+      contentType: 'text/html',
       contentLanguage: 'en',
       storageClass: s3deploy.StorageClass.INTELLIGENT_TIERING,
-      serverSideEncryption: s3deploy.ServerSideEncryption.AES_256, 
+      serverSideEncryption: s3deploy.ServerSideEncryption.AES_256,
       cacheControl: [
         s3deploy.CacheControl.setPublic(),
         s3deploy.CacheControl.maxAge(Duration.hours(1)),
