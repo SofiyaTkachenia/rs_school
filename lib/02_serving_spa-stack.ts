@@ -1,12 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs'; // Импортируем Construct из constructs
+import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as s3Origins from 'aws-cdk-lib/aws-cloudfront-origins'; // Correct import
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
-
 
 class ServingSpaStack extends cdk.Stack {
   /**
@@ -29,7 +28,7 @@ class ServingSpaStack extends cdk.Stack {
         restrictPublicBuckets: true,
       }),
     });
-    
+
     const cloudFrontOAI = new cloudfront.OriginAccessIdentity(this, 'OAI');
 
     bucket.addToResourcePolicy(new iam.PolicyStatement({
@@ -41,7 +40,7 @@ class ServingSpaStack extends cdk.Stack {
 
     const distribution = new cloudfront.Distribution(this, 'CloudFrontDistribution', {
       defaultBehavior: {
-        origin: new origins.S3Origin(bucket, {
+        origin: new s3Origins.S3Origin(bucket, {
           originAccessIdentity: cloudFrontOAI,
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -65,7 +64,8 @@ class ServingSpaStack extends cdk.Stack {
       ],
       accessControl: s3.BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
     });
+
   }
 }
 
-export { ServingSpaStack }
+export { ServingSpaStack };
