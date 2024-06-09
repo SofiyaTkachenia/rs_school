@@ -1,0 +1,33 @@
+{
+  "name": "02_serving_spa",
+  "version": "0.1.0",
+  "bin": {
+    "02_serving_spa": "bin/02_serving_spa.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "aws-cdk": "2.111.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-s3-deployment": "^1.204.0",
+    "aws-cdk-lib": "2.111.0",
+    "constructs": "^10.0.0"
+  },
+  "description": "This is a blank project for CDK development with JavaScript.",
+  "main": "jest.config.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
